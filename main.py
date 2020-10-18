@@ -221,7 +221,7 @@ file = open("HighScore.txt", "r")
 highScore = int(file.read())
 file.close()
 
-print(highScore)
+gamePause = False
 while True:
 
     if gameOver:
@@ -242,73 +242,79 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-            
-    # update      
-    all_sprites.update()
-    # check to see if a bullet hit a mob
-    hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
-    for hit in hits:
-        score += 50 - hit.radius
-        random.choice(explode_sounds).play()
-        expl = Explosion(hit.rect.center, 'lg')
-        all_sprites.add(expl)
-        # explode_sound.play()
-        if random.random() > 0.9:
-            pow = Pow(hit.rect.center)
-            all_sprites.add(pow)
-            powerups.add(pow)
-        newmob()
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_p:
+                if gamePause:
+                    gamePause = False
+                else:
+                    draw_text(screen, "Game Paused", 50, WIDTH/2, HEIGHT/2)
+                    gamePause = True
+    if not gamePause:
+        # update      
+        all_sprites.update()
+        # check to see if a bullet hit a mob
+        hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
+        for hit in hits:
+            score += 50 - hit.radius
+            random.choice(explode_sounds).play()
+            expl = Explosion(hit.rect.center, 'lg')
+            all_sprites.add(expl)
+            # explode_sound.play()
+            if random.random() > 0.9:
+                pow = Pow(hit.rect.center)
+                all_sprites.add(pow)
+                powerups.add(pow)
+            newmob()
 
-    # check to see if a mob hit the player. Set the value to true if you want to check for collision
-    hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
-    for hit in hits:
-        hit_player.play()
-        expl = Explosion(hit.rect.center, 'sm')
-        player.shield -= hit.radius * .7
-        all_sprites.add(expl)
+        # check to see if a mob hit the player. Set the value to true if you want to check for collision
+        hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
+        for hit in hits:
+            hit_player.play()
+            expl = Explosion(hit.rect.center, 'sm')
+            player.shield -= hit.radius * .7
+            all_sprites.add(expl)
 
-        newmob()
-        if player.shield <= 0:
-            player_die_sound.play()
-            death_explosion = Explosion(player.rect.center, 'player')
-            all_sprites.add(death_explosion)
-            player.hide()
-            player.lives -= 1
-            player.shield = 100
-        
-    # check to see if player hit a powerup
-    hits = pygame.sprite.spritecollide(player, powerups, True)
-    for hit in hits:
-        if hit.type == 'shield':
-            shield_sound.play()
-            player.shield += 20
-            if player.shield >= 100:
+            newmob()
+            if player.shield <= 0:
+                player_die_sound.play()
+                death_explosion = Explosion(player.rect.center, 'player')
+                all_sprites.add(death_explosion)
+                player.hide()
+                player.lives -= 1
                 player.shield = 100
-        if hit.type == 'gun':
-            gun_power.play()
-            player.powerup()
             
-    # if the player dies and the explosion has finshed playing
-    if player.lives == 0 and not death_explosion.alive():
-        gameOver = True
-        file = open("HighScore.txt", "w")
-        file.write(str(highScore))
-        file.close()
+        # check to see if player hit a powerup
+        hits = pygame.sprite.spritecollide(player, powerups, True)
+        for hit in hits:
+            if hit.type == 'shield':
+                shield_sound.play()
+                player.shield += 20
+                if player.shield >= 100:
+                    player.shield = 100
+            if hit.type == 'gun':
+                gun_power.play()
+                player.powerup()
+                
+        # if the player dies and the explosion has finshed playing
+        if player.lives == 0 and not death_explosion.alive():
+            gameOver = True
+            file = open("HighScore.txt", "w")
+            file.write(str(highScore))
+            file.close()
 
-    # draw / render
-    screen.fill(BLACK)
-    screen.blit(background, background_rect)
-    all_sprites.draw(screen)
+        # draw / render
+        screen.fill(BLACK)
+        screen.blit(background, background_rect)
+        all_sprites.draw(screen)
 
-    if highScore < score:
-        highScore = score
+        if highScore < score:
+            highScore = score
 
-    draw_text(screen, "Player Score " + str(score), 18, WIDTH / 2, 10)
-    draw_text(screen, "High Score " + str(highScore), 18, WIDTH/2, 30)
+        draw_text(screen, "Player Score " + str(score), 18, WIDTH / 2, 10)
+        draw_text(screen, "High Score " + str(highScore), 18, WIDTH/2, 30)
 
 
-    draw_shieldBar(screen, 5, 5, player.shield)
-    draw_lives(screen, WIDTH -100, 5, player.lives, player_mini_img)
-    
+        draw_shieldBar(screen, 5, 5, player.shield)
+        draw_lives(screen, WIDTH -100, 5, player.lives, player_mini_img)
+        draw_text(screen, "Press 'p' to pause Game",15, 410, 30)
     pygame.display.update()
-
