@@ -1,1 +1,27 @@
 # galaxyQuest
+
+
+What the program can do
+  - Play video game.
+
+The program can also filter through a collection of names
+other ideas maybe added such as matching courses from one row with courses in another row
+
+# COMMANDS USED
+pygame video game. This is a space shooter video game.
+
+# PROGRAMMING SOFTWARE USED
+Python
+
+# SOURCES
+<ul>
+  <li>www.w3schools.com</li>
+  <li>www.youtube.com</li>
+  <li>www.stackoverflow.com</li>
+</ul>
+
+# IMAGE OF SOFTWARE TEST
+<img src="space_shooter.PNG"   />
+<img src="space_shooterimg2.PNG"   />
+<img src="space_shootermenu.PNG"   />
+

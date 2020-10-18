@@ -1,21 +1,6 @@
-import pygame, sys
-from shooter import *
+import pygame, random, sys
 from color import *
-from os import path
-import random
-
-# Frozen Jam by tgfcoder <https://twitter.com/tgfcoder>
-# licensed under CC-BY-3 <http://creativecommons.org/licenses/by/3.0/>
-
-pygame.init()
-pygame.mixer.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Shooter Game!")
-clock = pygame.time.Clock()
-
-font_name = pygame.font.match_font('arial') # instead of knowing the exact name pygame
-# will serch through the system to find it.
-
+all_sprites = pygame.sprite.Group()
 class Button(pygame.sprite.Sprite):
 
     def __init__(self, width, height, x, y, color, text=''):
@@ -50,6 +35,21 @@ class Button(pygame.sprite.Sprite):
             if self.text == 'Quit':
                 place = 0
             return place
+
+  
+def draw_lives(surf, x, y, lives, img):
+    for i in range(lives):
+        img_rect = img.get_rect()
+        img_rect.x = x + 30 * i
+        img_rect.y = y
+        surf.blit(img, img_rect)
+        
+def draw_text(surf, text, size, x, y):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surface, text_rect)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -140,10 +140,10 @@ class Mob(pygame.sprite.Sprite):
         #pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         self.rect.x = random.randrange(0, WIDTH - self.rect.width)
         self.rect.y = random.randrange(-100, -40)
-        self.speedy = random.randrange(1, 8)
-        self.speedx = random.randrange(-3, 3)
+        self.speedy = 24# random.randrange(8, 24)
+        self.speedx = random.randrange(-1, 1)
         self.rot = 0
-        self.rot_speed = random.randrange(-12, 12)
+        self.rot_speed = random.randrange(-8, 8)
         self.last_update = pygame.time.get_ticks()
 
     def rotate(self):
@@ -164,151 +164,63 @@ class Mob(pygame.sprite.Sprite):
         if self.rect.top > HEIGHT + 10 or self.rect.left < -25 or self.rect.right > WIDTH + 20:
             self.rect.x = random.randrange(0, WIDTH - self.rect.width)
             self.rect.y = random.randrange(-100, -40)
-            self.speedy = random.randrange(1, 8)
+            self.speedy = 24#random.randrange(8, 24)
 
-def newmob():
-    m = Mob()
-    all_sprites.add(m)
-    mobs.add(m)
-    
-def draw_shieldBar(surf, x, y, pct): # pct means percentage
-    if pct < 0:
-        pct = 0
-        
-    BAR_LENGTH = 100
-    BAR_HEIGHT = 10
-    fill = (pct / 100) * BAR_LENGTH
-  
-    outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
-    #fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
-    for i in range(int(fill / 5)):
-        pygame.draw.rect(surf, (8 * i, i, 0), (x + 5 * i, y, 5, BAR_HEIGHT))
-    pygame.draw.rect(surf, WHITE, outline_rect, 2)
+class Pow(pygame.sprite.Sprite):
+    def __init__(self, center):
+        pygame.sprite.Sprite.__init__(self)
+        self.type = random.choice(['shield', 'gun'])
+        self.image = powerup_images[self.type]
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.speedy = 10
+        self.decay = 3  # use this to angle the bullet when it hits a projectile
 
-
-def game_over_screen():
-    global highScore
-    gameScreen = 1
-    #all_sprites.add(btn3)
-    waiting = True
-    while waiting:
-        clock.tick(30)
-        if gameScreen == 1:
-            all_sprites = pygame.sprite.Group()
-            screen.blit(background, background_rect)
-            draw_text(screen,"Galaxy Quest", 50, WIDTH/2, 90)
-            draw_text(screen, "High Score", 20, WIDTH/2,160)
-            draw_text(screen, str(highScore), 20, WIDTH/2,200)
-            btn1 = Button(100, 40, 190,  HEIGHT/2, WHITE,  'Play')
-            all_sprites.add(btn1)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or gameScreen == 0:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                gameScreen = btn1.onClick(event, gameScreen)
-                
-        if gameScreen == 2:
-            waiting = False
-       
-        all_sprites.draw(screen)
-        pygame.display.update()
-
-pygame.mixer.music.play(loops=-1)
-gameOver = True
-
-file = open("HighScore.txt", "r")
-highScore = int(file.read())
-file.close()
-
-print(highScore)
-while True:
-
-    if gameOver:
-        game_over_screen()
-        gameOver = False
-        all_sprites = pygame.sprite.Group()
-        mobs = pygame.sprite.Group() # create a group of mobs
-        bullets = pygame.sprite.Group()
-        powerups = pygame.sprite.Group()
-        player = Player()
-        all_sprites.add(player)
-        for i in range(random.randrange(8, 24)):
-            newmob()
-        score = 0
+    def update(self):
+        self.rect.y += self.speedy
+        # kill it if moves off the top of the screen
+        if self.rect.top > HEIGHT:
+            self.kill()
             
-    clock.tick(30)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, center, size):
+        pygame.sprite.Sprite.__init__(self)
+        self.size = size
+        self.image = explosion_anim[self.size][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.frame = 0
+        self.last_update = pygame.time.get_ticks()
+        self.frame_rate = 75
+
+    def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > self.frame_rate:
+            self.last_update = now
+            self.frame += 1
+            if self.frame == len(explosion_anim[self.size]):
+                self.kill()
+            else:
+                # use this code to save the center so it does not rotate out of balance.
+                center = self.rect.center
+                self.image = explosion_anim[self.size][self.frame]
+                self.rect = self.image.get_rect()
+                self.rect.center = center
             
-    # update      
-    all_sprites.update()
-    # check to see if a bullet hit a mob
-    hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
-    for hit in hits:
-        score += 50 - hit.radius
-        random.choice(explode_sounds).play()
-        expl = Explosion(hit.rect.center, 'lg')
-        all_sprites.add(expl)
-        # explode_sound.play()
-        if random.random() > 0.9:
-            pow = Pow(hit.rect.center)
-            all_sprites.add(pow)
-            powerups.add(pow)
-        newmob()
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = bullet_img
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedy = -10
+        self.decay = 3  # use this to angle the bullet when it hits a projectile
 
-    # check to see if a mob hit the player. Set the value to true if you want to check for collision
-    hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
-    for hit in hits:
-        hit_player.play()
-        expl = Explosion(hit.rect.center, 'sm')
-        player.shield -= hit.radius * .7
-        all_sprites.add(expl)
-
-        newmob()
-        if player.shield <= 0:
-            player_die_sound.play()
-            death_explosion = Explosion(player.rect.center, 'player')
-            all_sprites.add(death_explosion)
-            player.hide()
-            player.lives -= 1
-            player.shield = 100
-        
-    # check to see if player hit a powerup
-    hits = pygame.sprite.spritecollide(player, powerups, True)
-    for hit in hits:
-        if hit.type == 'shield':
-            shield_sound.play()
-            player.shield += 20
-            if player.shield >= 100:
-                player.shield = 100
-        if hit.type == 'gun':
-            gun_power.play()
-            player.powerup()
-            
-    # if the player dies and the explosion has finshed playing
-    if player.lives == 0 and not death_explosion.alive():
-        gameOver = True
-        file = open("HighScore.txt", "w")
-        file.write(str(highScore))
-        file.close()
-
-    # draw / render
-    screen.fill(BLACK)
-    screen.blit(background, background_rect)
-    all_sprites.draw(screen)
-
-    if highScore < score:
-        highScore = score
-
-    draw_text(screen, "Player Score " + str(score), 18, WIDTH / 2, 10)
-    draw_text(screen, "High Score " + str(highScore), 18, WIDTH/2, 30)
-
-
-    draw_shieldBar(screen, 5, 5, player.shield)
-    draw_lives(screen, WIDTH -100, 5, player.lives, player_mini_img)
-    
-    pygame.display.update()
-
+    def update(self):
+        self.rect.y += self.speedy
+        # kill it if moves off the top of the screen
+        if self.rect.bottom < 0:
+            self.kill()
