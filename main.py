@@ -200,14 +200,17 @@ def game_over_screen():
             draw_text(screen, "High Score", 20, WIDTH/2,160)
             draw_text(screen, str(highScore), 20, WIDTH/2,200)
             btn1 = Button(100, 40, 190,  HEIGHT/2, WHITE,  'Play')
+            btn2 = Button(100, 40, 190, HEIGHT/2 + 50, RED, 'Quit')
+    
             all_sprites.add(btn1)
+            all_sprites.add(btn2)
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or gameScreen == 0:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 gameScreen = btn1.onClick(event, gameScreen)
-                
+
         if gameScreen == 2:
             waiting = False
        
