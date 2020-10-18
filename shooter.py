@@ -217,7 +217,7 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.bottom = y
         self.rect.centerx = x
         self.speedy = -10
-        self.decay = 3  # use this to angle the bullet when it hits a projectile
+        self.bullet_count = 10  # use this to angle the bullet when it hits a projectile
 
     def update(self):
         self.rect.y += self.speedy

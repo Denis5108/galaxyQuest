@@ -135,7 +135,7 @@ class Mob(pygame.sprite.Sprite):
         self.image_orig.set_colorkey(BLACK)
         self.image = self.image_orig.copy()
         self.rect = self.image.get_rect()
-        self.radius = int(self.rect.width * .9 / 2)
+        self.radius = int(self.rect.width * .9)
         # collision circles
         #pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         self.rect.x = random.randrange(0, WIDTH - self.rect.width)
@@ -200,10 +200,7 @@ def game_over_screen():
             draw_text(screen, "High Score", 20, WIDTH/2,160)
             draw_text(screen, str(highScore), 20, WIDTH/2,200)
             btn1 = Button(100, 40, 190,  HEIGHT/2, WHITE,  'Play')
-            btn2 = Button(100, 40, 190, HEIGHT/2 + 50, RED, 'Quit')
-    
             all_sprites.add(btn1)
-            all_sprites.add(btn2)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -263,7 +260,7 @@ while True:
             expl = Explosion(hit.rect.center, 'lg')
             all_sprites.add(expl)
             # explode_sound.play()
-            if random.random() > 0.9:
+            if random.random() > 1.5:
                 pow = Pow(hit.rect.center)
                 all_sprites.add(pow)
                 powerups.add(pow)
