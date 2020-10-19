@@ -210,7 +210,7 @@ def game_over_screen():
 
         if gameScreen == 2:
             waiting = False
-       
+        
         all_sprites.draw(screen)
         pygame.display.update()
 
@@ -255,7 +255,7 @@ while True:
         # check to see if a bullet hit a mob
         hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
         for hit in hits:
-            score += 50 - hit.radius
+            score += hit.radius
             random.choice(explode_sounds).play()
             expl = Explosion(hit.rect.center, 'lg')
             all_sprites.add(expl)
@@ -310,7 +310,7 @@ while True:
         if highScore < score:
             highScore = score
 
-        draw_text(screen, "Player Score " + str(score), 18, WIDTH / 2, 10)
+        draw_text(screen, "Player Score {}".format(score), 18, WIDTH / 2, 10)
         draw_text(screen, "High Score " + str(highScore), 18, WIDTH/2, 30)
 
 

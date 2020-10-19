@@ -34,6 +34,7 @@ class Button(pygame.sprite.Sprite):
                 place = 4
             if self.text == 'Quit':
                 place = 0
+
             return place
 
   
